@@ -98,7 +98,10 @@ class ContentRepository(private val context: Context) {
         }
 
         val questions = mutableListOf<QuizQuestion>()
-        loadLegacyQuizQuestions(topicByTitleKey).forEach { questions += it }
+        loadLegacyQuizQuestions(
+            topicByTitleKey = topicByTitleKey,
+            topicList = topicList
+        ).forEach { questions += it }
         directories.forEach { categoryDir ->
             val files = context.assets.list(categoryDir).orEmpty()
                 .filter { it.lowercase(Locale.US).endsWith(".json") }
@@ -109,7 +112,11 @@ class ContentRepository(private val context: Context) {
                 if (topic != null) {
                     loadTopicQuizQuestions(assetPath, topic).forEach { questions += it }
                 } else if (file.equals("quizzes.json", ignoreCase = true)) {
-                    loadSharedQuizQuestions(assetPath, topicByTitleKey).forEach { questions += it }
+                    loadSharedQuizQuestions(
+                        assetPath = assetPath,
+                        topicByTitleKey = topicByTitleKey,
+                        topicList = topicList
+                    ).forEach { questions += it }
                 }
             }
         }
@@ -145,24 +152,25 @@ class ContentRepository(private val context: Context) {
         val topicId = buildTopicId(categoryDir, fileName)
         val raw = readAssetSafely(assetPath)
         if (raw.isNullOrBlank()) {
+            val starter = buildStarterContent(fallbackTitle, categoryDir)
             return Topic(
                 id = topicId,
                 title = fallbackTitle,
                 category = mapCategory(categoryDir),
                 categoryId = categoryDir.uppercase(Locale.US),
                 subCategory = fallbackSubCategory,
-                explanation = "Content will be available soon for this topic.",
-                example = "",
-                practice = "",
+                explanation = starter.explanation,
+                example = starter.example,
+                practice = starter.practice,
                 questionCount = 0
             )
         }
         return try {
             val obj = JSONObject(raw)
             val examplesText = obj.optJSONArray("examples").toExampleText()
-            val approachesText = obj.optJSONArray("all_approaches").toBulletText()
+            val approachesText = obj.optJSONArray("all_approaches").toApproachesText()
             val explanation = buildString {
-                append(obj.optString("theory").ifBlank { "Theory is being prepared for this topic." })
+                append(cleanText(obj.optString("theory").ifBlank { "Theory is being prepared for this topic." }))
                 if (approachesText.isNotBlank()) {
                     append("\n\nApproaches:\n")
                     append(approachesText)
@@ -173,28 +181,32 @@ class ContentRepository(private val context: Context) {
                 title = obj.optString("topic").ifBlank { fallbackTitle },
                 category = mapCategory(categoryDir),
                 categoryId = categoryDir.uppercase(Locale.US),
-                subCategory = obj.optString("section").ifBlank { fallbackSubCategory },
+                subCategory = cleanText(obj.optString("section").ifBlank { fallbackSubCategory }),
                 explanation = explanation,
                 example = examplesText,
                 practice = obj.optJSONArray("practice_questions").toBulletText(),
                 questionCount = 0
             )
         } catch (_: Exception) {
+            val starter = buildStarterContent(fallbackTitle, categoryDir)
             Topic(
                 id = topicId,
                 title = fallbackTitle,
                 category = mapCategory(categoryDir),
                 categoryId = categoryDir.uppercase(Locale.US),
                 subCategory = fallbackSubCategory,
-                explanation = "Unable to parse topic details from this file.",
-                example = "",
-                practice = "",
+                explanation = starter.explanation,
+                example = starter.example,
+                practice = starter.practice,
                 questionCount = 0
             )
         }
     }
 
-    private fun loadLegacyQuizQuestions(topicByTitleKey: Map<String, Topic>): List<QuizQuestion> {
+    private fun loadLegacyQuizQuestions(
+        topicByTitleKey: MutableMap<String, Topic>,
+        topicList: MutableList<Topic>
+    ): List<QuizQuestion> {
         val legacy = readAssetSafely("quizzes.json") ?: return emptyList()
         if (legacy.isBlank()) return emptyList()
         val result = mutableListOf<QuizQuestion>()
@@ -202,7 +214,11 @@ class ContentRepository(private val context: Context) {
             val array = JSONArray(legacy)
             for (i in 0 until array.length()) {
                 val obj = array.optJSONObject(i) ?: continue
-                val topic = topicByTitleKey[titleKey(obj.optString("topicTitle"))] ?: continue
+                val topic = resolveOrCreateTopicForQuiz(
+                    quizObj = obj,
+                    topicByTitleKey = topicByTitleKey,
+                    topicList = topicList
+                ) ?: continue
                 val options = obj.optJSONArray("options").toStringList().take(4)
                 if (options.isEmpty()) continue
                 val answerIndex = obj.optInt("answerIndex", -1)
@@ -224,7 +240,11 @@ class ContentRepository(private val context: Context) {
         return result
     }
 
-    private fun loadSharedQuizQuestions(assetPath: String, topicByTitleKey: Map<String, Topic>): List<QuizQuestion> {
+    private fun loadSharedQuizQuestions(
+        assetPath: String,
+        topicByTitleKey: MutableMap<String, Topic>,
+        topicList: MutableList<Topic>
+    ): List<QuizQuestion> {
         val raw = readAssetSafely(assetPath) ?: return emptyList()
         if (raw.isBlank()) return emptyList()
         val result = mutableListOf<QuizQuestion>()
@@ -232,7 +252,11 @@ class ContentRepository(private val context: Context) {
             val array = JSONArray(raw)
             for (i in 0 until array.length()) {
                 val obj = array.optJSONObject(i) ?: continue
-                val topic = topicByTitleKey[titleKey(obj.optString("topicTitle"))] ?: continue
+                val topic = resolveOrCreateTopicForQuiz(
+                    quizObj = obj,
+                    topicByTitleKey = topicByTitleKey,
+                    topicList = topicList
+                ) ?: continue
                 val options = obj.optJSONArray("options").toStringList().take(4)
                 val answerIndex = obj.optInt("answerIndex", -1)
                 if (options.size < 2 || answerIndex !in options.indices) continue
@@ -356,6 +380,102 @@ class ContentRepository(private val context: Context) {
         return title.trim().lowercase(Locale.US).replace(Regex("[^a-z0-9]+"), "")
     }
 
+    private fun resolveOrCreateTopicForQuiz(
+        quizObj: JSONObject,
+        topicByTitleKey: MutableMap<String, Topic>,
+        topicList: MutableList<Topic>
+    ): Topic? {
+        val quizTopicTitle = cleanText(quizObj.optString("topicTitle"))
+        val key = titleKey(quizTopicTitle)
+        topicByTitleKey[key]?.let { return it }
+
+        val resolved = findBestTopicMatch(quizTopicTitle, topicByTitleKey.values.toList())
+        if (resolved != null) {
+            topicByTitleKey[key] = resolved
+            return resolved
+        }
+
+        if (quizTopicTitle.isBlank()) return null
+        val topicIdRaw = quizObj.optString("topicId")
+        val categoryId = inferCategoryId(topicIdRaw, quizTopicTitle)
+        val starter = buildStarterContent(quizTopicTitle, categoryId)
+        val synthetic = Topic(
+            id = "generated_${topicIdRaw.ifBlank { key.ifBlank { "topic" } }}",
+            title = quizTopicTitle,
+            category = mapCategory(categoryId),
+            categoryId = categoryId,
+            subCategory = categoryId.toPrettyCategoryTitle(),
+            explanation = starter.explanation,
+            example = starter.example,
+            practice = starter.practice,
+            questionCount = 0
+        )
+        topicList += synthetic
+        topicByTitleKey[key] = synthetic
+        return synthetic
+    }
+
+    private fun findBestTopicMatch(quizTitle: String, topics: List<Topic>): Topic? {
+        if (quizTitle.isBlank()) return null
+        val normalizedQuiz = normalizeWords(quizTitle)
+        if (normalizedQuiz.isEmpty()) return null
+        return topics
+            .asSequence()
+            .map { topic ->
+                val topicWords = normalizeWords(topic.title)
+                val overlap = normalizedQuiz.intersect(topicWords).size
+                val score = overlap * 10 - kotlin.math.abs(topicWords.size - normalizedQuiz.size)
+                topic to score
+            }
+            .filter { it.second >= 8 }
+            .maxByOrNull { it.second }
+            ?.first
+    }
+
+    private fun normalizeWords(input: String): Set<String> {
+        return cleanText(input)
+            .lowercase(Locale.US)
+            .replace("&", " ")
+            .replace(",", " ")
+            .replace("-", " ")
+            .replace("/", " ")
+            .split(Regex("\\s+"))
+            .map { it.trim() }
+            .filter { it.length >= 3 }
+            .toSet()
+    }
+
+    private fun inferCategoryId(topicIdRaw: String, topicTitle: String): String {
+        val source = "${topicIdRaw.lowercase(Locale.US)} ${topicTitle.lowercase(Locale.US)}"
+        return when {
+            source.contains("eng") || source.contains("grammar") || source.contains("vocab") || source.contains("verbal") ->
+                "VERBAL"
+            source.contains("logical") || source.contains("reasoning") || source.contains("analogy") || source.contains("syllogism") ->
+                "LOGICAL"
+            else -> "QUANTITATIVE"
+        }
+    }
+
+    private fun buildStarterContent(topicTitle: String, categoryId: String): StarterContent {
+        val cleanTitle = cleanText(topicTitle)
+        val categoryText = categoryId.toPrettyCategoryTitle()
+        val explanation = buildString {
+            append("$cleanTitle is part of $categoryText aptitude preparation.\n\n")
+            append("How to study this topic effectively:\n")
+            append("1. Understand definitions and core rules.\n")
+            append("2. Learn 3-5 standard patterns and shortcuts.\n")
+            append("3. Solve easy questions first, then timed sets.\n")
+            append("4. Review mistakes and build a short revision sheet.")
+        }
+        val example = "Example approach for $cleanTitle:\nRead the question carefully, identify the rule/pattern, then eliminate unlikely options before finalizing the answer."
+        val practice = buildString {
+            append("1. Solve 10 basic questions from $cleanTitle.\n")
+            append("2. Solve 10 medium-level timed questions.\n")
+            append("3. Note formulas/patterns and revise once daily.")
+        }
+        return StarterContent(explanation = explanation, example = example, practice = practice)
+    }
+
     private fun String.toPrettyCategoryTitle(): String {
         return lowercase(Locale.US).replaceFirstChar { it.uppercase() }
     }
@@ -372,9 +492,37 @@ class ContentRepository(private val context: Context) {
 
     private fun JSONArray?.toBulletText(): String {
         return toStringList().mapIndexed { index, item ->
-            val cleaned = item.removePrefix("${index + 1}. ").trim()
+            val cleaned = cleanText(item.removePrefix("${index + 1}. ").trim())
             "${index + 1}. $cleaned"
         }.joinToString(separator = "\n")
+    }
+
+    private fun JSONArray?.toApproachesText(): String {
+        if (this == null) return ""
+        val list = mutableListOf<String>()
+        for (i in 0 until length()) {
+            val value = opt(i)
+            when (value) {
+                is JSONObject -> {
+                    val title = cleanText(value.optString("approach"))
+                    val explanation = cleanText(value.optString("explanation"))
+                    val example = cleanText(value.optString("example"))
+                    val block = listOfNotNull(
+                        if (title.isBlank()) null else "${i + 1}. $title",
+                        if (explanation.isBlank()) null else "   $explanation",
+                        if (example.isBlank()) null else "   Example: $example"
+                    ).joinToString("\n")
+                    if (block.isNotBlank()) list += block
+                }
+                else -> {
+                    val text = cleanText(optString(i))
+                    if (text.isNotBlank()) {
+                        list += "${i + 1}. $text"
+                    }
+                }
+            }
+        }
+        return list.joinToString("\n")
     }
 
     private fun JSONArray?.toExampleText(): String {
@@ -382,8 +530,8 @@ class ContentRepository(private val context: Context) {
         val blocks = mutableListOf<String>()
         for (i in 0 until length()) {
             val obj = optJSONObject(i) ?: continue
-            val question = obj.optString("question").trim()
-            val solution = obj.optString("solution").trim()
+            val question = cleanText(obj.optString("question").trim())
+            val solution = cleanText(obj.optString("solution").trim())
             if (question.isBlank() && solution.isBlank()) continue
             blocks += listOfNotNull(
                 if (question.isBlank()) null else "Q. $question",
@@ -393,11 +541,31 @@ class ContentRepository(private val context: Context) {
         return blocks.joinToString(separator = "\n\n")
     }
 
+    private fun cleanText(input: String): String {
+        return input
+            .replace("â†’", "->")
+            .replace("â€“", "-")
+            .replace("â€”", "-")
+            .replace("Â²", "²")
+            .replace("Â³", "³")
+            .replace("Ã—", "x")
+            .replace("â€™", "'")
+            .replace("â€œ", "\"")
+            .replace("â€", "\"")
+            .trim()
+    }
+
     private data class ParsedContent(
         val categories: List<QuizCategory>,
         val topics: List<Topic>,
         val topicById: Map<String, Topic>,
         val questions: List<QuizQuestion>
+    )
+
+    private data class StarterContent(
+        val explanation: String,
+        val example: String,
+        val practice: String
     )
 
     companion object {
