@@ -118,10 +118,7 @@ class ContentRepository(private val context: Context) {
         }
 
         val questions = mutableListOf<QuizQuestion>()
-        loadLegacyQuizQuestions(
-            topicByTitleKey = topicByTitleKey,
-            topicList = topicList
-        ).forEach { questions += it }
+        loadLegacyQuizQuestions(topicByTitleKey = topicByTitleKey).forEach { questions += it }
         directories.forEach { categoryDir ->
             val files = context.assets.list(categoryDir).orEmpty()
                 .filter { it.lowercase(Locale.US).endsWith(".json") }
@@ -134,8 +131,7 @@ class ContentRepository(private val context: Context) {
                 } else if (file.equals("quizzes.json", ignoreCase = true)) {
                     loadSharedQuizQuestions(
                         assetPath = assetPath,
-                        topicByTitleKey = topicByTitleKey,
-                        topicList = topicList
+                        topicByTitleKey = topicByTitleKey
                     ).forEach { questions += it }
                 }
             }
@@ -172,16 +168,15 @@ class ContentRepository(private val context: Context) {
         val topicId = buildTopicId(categoryDir, fileName)
         val raw = readAssetSafely(assetPath)
         if (raw.isNullOrBlank()) {
-            val starter = buildStarterContent(fallbackTitle, categoryDir)
             return Topic(
                 id = topicId,
                 title = fallbackTitle,
                 category = mapCategory(categoryDir),
                 categoryId = categoryDir.uppercase(Locale.US),
                 subCategory = fallbackSubCategory,
-                explanation = starter.explanation,
-                example = starter.example,
-                practice = starter.practice,
+                explanation = "",
+                example = "",
+                practice = "",
                 questionCount = 0
             )
         }
@@ -208,25 +203,21 @@ class ContentRepository(private val context: Context) {
                 questionCount = 0
             )
         } catch (_: Exception) {
-            val starter = buildStarterContent(fallbackTitle, categoryDir)
             Topic(
                 id = topicId,
                 title = fallbackTitle,
                 category = mapCategory(categoryDir),
                 categoryId = categoryDir.uppercase(Locale.US),
                 subCategory = fallbackSubCategory,
-                explanation = starter.explanation,
-                example = starter.example,
-                practice = starter.practice,
+                explanation = "",
+                example = "",
+                practice = "",
                 questionCount = 0
             )
         }
     }
 
-    private fun loadLegacyQuizQuestions(
-        topicByTitleKey: MutableMap<String, Topic>,
-        topicList: MutableList<Topic>
-    ): List<QuizQuestion> {
+    private fun loadLegacyQuizQuestions(topicByTitleKey: MutableMap<String, Topic>): List<QuizQuestion> {
         val legacy = readAssetSafely("quizzes.json") ?: return emptyList()
         if (legacy.isBlank()) return emptyList()
         val result = mutableListOf<QuizQuestion>()
@@ -234,10 +225,9 @@ class ContentRepository(private val context: Context) {
             val array = JSONArray(legacy)
             for (i in 0 until array.length()) {
                 val obj = array.optJSONObject(i) ?: continue
-                val topic = resolveOrCreateTopicForQuiz(
+                val topic = resolveTopicForQuiz(
                     quizObj = obj,
-                    topicByTitleKey = topicByTitleKey,
-                    topicList = topicList
+                    topicByTitleKey = topicByTitleKey
                 ) ?: continue
                 val options = obj.optJSONArray("options").toStringList().take(4)
                 if (options.isEmpty()) continue
@@ -262,8 +252,7 @@ class ContentRepository(private val context: Context) {
 
     private fun loadSharedQuizQuestions(
         assetPath: String,
-        topicByTitleKey: MutableMap<String, Topic>,
-        topicList: MutableList<Topic>
+        topicByTitleKey: MutableMap<String, Topic>
     ): List<QuizQuestion> {
         val raw = readAssetSafely(assetPath) ?: return emptyList()
         if (raw.isBlank()) return emptyList()
@@ -272,10 +261,9 @@ class ContentRepository(private val context: Context) {
             val array = JSONArray(raw)
             for (i in 0 until array.length()) {
                 val obj = array.optJSONObject(i) ?: continue
-                val topic = resolveOrCreateTopicForQuiz(
+                val topic = resolveTopicForQuiz(
                     quizObj = obj,
-                    topicByTitleKey = topicByTitleKey,
-                    topicList = topicList
+                    topicByTitleKey = topicByTitleKey
                 ) ?: continue
                 val options = obj.optJSONArray("options").toStringList().take(4)
                 val answerIndex = obj.optInt("answerIndex", -1)
@@ -400,10 +388,9 @@ class ContentRepository(private val context: Context) {
         return title.trim().lowercase(Locale.US).replace(Regex("[^a-z0-9]+"), "")
     }
 
-    private fun resolveOrCreateTopicForQuiz(
+    private fun resolveTopicForQuiz(
         quizObj: JSONObject,
-        topicByTitleKey: MutableMap<String, Topic>,
-        topicList: MutableList<Topic>
+        topicByTitleKey: MutableMap<String, Topic>
     ): Topic? {
         val quizTopicTitle = cleanText(quizObj.optString("topicTitle"))
         val key = titleKey(quizTopicTitle)
@@ -414,25 +401,7 @@ class ContentRepository(private val context: Context) {
             topicByTitleKey[key] = resolved
             return resolved
         }
-
-        if (quizTopicTitle.isBlank()) return null
-        val topicIdRaw = quizObj.optString("topicId")
-        val categoryId = inferCategoryId(topicIdRaw, quizTopicTitle)
-        val starter = buildStarterContent(quizTopicTitle, categoryId)
-        val synthetic = Topic(
-            id = "generated_${topicIdRaw.ifBlank { key.ifBlank { "topic" } }}",
-            title = quizTopicTitle,
-            category = mapCategory(categoryId),
-            categoryId = categoryId,
-            subCategory = categoryId.toPrettyCategoryTitle(),
-            explanation = starter.explanation,
-            example = starter.example,
-            practice = starter.practice,
-            questionCount = 0
-        )
-        topicList += synthetic
-        topicByTitleKey[key] = synthetic
-        return synthetic
+        return null
     }
 
     private fun findBestTopicMatch(quizTitle: String, topics: List<Topic>): Topic? {
@@ -463,37 +432,6 @@ class ContentRepository(private val context: Context) {
             .map { it.trim() }
             .filter { it.length >= 3 }
             .toSet()
-    }
-
-    private fun inferCategoryId(topicIdRaw: String, topicTitle: String): String {
-        val source = "${topicIdRaw.lowercase(Locale.US)} ${topicTitle.lowercase(Locale.US)}"
-        return when {
-            source.contains("eng") || source.contains("grammar") || source.contains("vocab") || source.contains("verbal") ->
-                "VERBAL"
-            source.contains("logical") || source.contains("reasoning") || source.contains("analogy") || source.contains("syllogism") ->
-                "LOGICAL"
-            else -> "QUANTITATIVE"
-        }
-    }
-
-    private fun buildStarterContent(topicTitle: String, categoryId: String): StarterContent {
-        val cleanTitle = cleanText(topicTitle)
-        val categoryText = categoryId.toPrettyCategoryTitle()
-        val explanation = buildString {
-            append("$cleanTitle is part of $categoryText aptitude preparation.\n\n")
-            append("How to study this topic effectively:\n")
-            append("1. Understand definitions and core rules.\n")
-            append("2. Learn 3-5 standard patterns and shortcuts.\n")
-            append("3. Solve easy questions first, then timed sets.\n")
-            append("4. Review mistakes and build a short revision sheet.")
-        }
-        val example = "Example approach for $cleanTitle:\nRead the question carefully, identify the rule/pattern, then eliminate unlikely options before finalizing the answer."
-        val practice = buildString {
-            append("1. Solve 10 basic questions from $cleanTitle.\n")
-            append("2. Solve 10 medium-level timed questions.\n")
-            append("3. Note formulas/patterns and revise once daily.")
-        }
-        return StarterContent(explanation = explanation, example = example, practice = practice)
     }
 
     private fun String.toPrettyCategoryTitle(): String {
@@ -580,12 +518,6 @@ class ContentRepository(private val context: Context) {
         val topics: List<Topic>,
         val topicById: Map<String, Topic>,
         val questions: List<QuizQuestion>
-    )
-
-    private data class StarterContent(
-        val explanation: String,
-        val example: String,
-        val practice: String
     )
 
     companion object {

@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.view.View
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -29,20 +28,6 @@ class MainActivity : AppCompatActivity() {
         val navHost = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHost.navController
         binding.bottomNav.setupWithNavController(navController)
-
-        val topLevelDestinations = setOf(
-            R.id.homeFragment,
-            R.id.quizFragment,
-            R.id.progressFragment,
-            R.id.aboutFragment
-        )
-        navController.addOnDestinationChangedListener { _, destination, _ ->
-            binding.bottomNav.visibility = if (topLevelDestinations.contains(destination.id)) {
-                View.VISIBLE
-            } else {
-                View.GONE
-            }
-        }
 
         requestNotificationPermissionIfNeeded()
     }
