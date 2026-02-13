@@ -48,6 +48,11 @@ App flow is now:
 - JDK 17 (recommended; minimum JDK 11 for AGP 8.x)
 - Android SDK configured via Android Studio SDK Manager
 
+## Verification Status
+- Project refactor completed for dynamic `Category -> Topic -> Quiz` assets.
+- Runtime safety checks added for empty or invalid JSON topic files.
+- Local CLI build requires JDK 11+ (current machine Java 8 will fail AGP setup).
+
 ## Run Locally
 1. Clone repo.
 2. Open in Android Studio.
