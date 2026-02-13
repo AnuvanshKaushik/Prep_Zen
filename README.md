@@ -60,6 +60,26 @@ App flow is now:
 4. Sync project.
 5. Run app on emulator/device (minSdk 24).
 
+## GitHub Actions APK Build
+- Workflow file: `.github/workflows/android.yml`
+- Triggers:
+  - Push to `main`
+  - Pull request targeting `main`
+  - Push tag like `v1.0.0`
+  - Manual run (`workflow_dispatch`)
+
+### Download APK from Actions
+1. Open GitHub repo -> **Actions** tab.
+2. Open latest successful **Android CI** run.
+3. Scroll to **Artifacts**.
+4. Download:
+   - `prepzen-debug-apk`
+   - `prepzen-release-apk`
+
+### Optional GitHub Release APK
+- Either push a tag (for example `v1.0.0`) or run workflow manually with `create_release=true`.
+- The workflow creates/uses a release tag and attaches both debug and release APKs to GitHub Releases.
+
 ## Useful Commands
 ```bash
 ./gradlew :app:assembleDebug
