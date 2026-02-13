@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@id/homeFragment"
+        android:icon="@drawable/ic_home"
+        android:title="@string/home" />
+    <item
+        android:id="@id/quizFragment"
+        android:icon="@drawable/ic_quiz"
+        android:title="@string/quiz" />
+    <item
+        android:id="@id/progressFragment"
+        android:icon="@drawable/ic_progress"
+        android:title="@string/progress" />
+    <item
+        android:id="@id/aboutFragment"
+        android:icon="@drawable/ic_stat_book"
+        android:title="@string/about" />
+</menu>

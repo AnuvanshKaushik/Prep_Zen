@@ -1,0 +1,43 @@
+{
+  "section": "Reasoning",
+  "topic": "Analogy",
+
+  "theory": "Analogy means similarity in relationship between two pairs of words, numbers, or figures. In reasoning exams, candidates must identify the same logical relationship in another pair. Common relationships include synonym, antonym, cause–effect, tool–worker, part–whole, classification, function, measurement, and alphabet/number patterns.",
+
+  "all_approaches": [
+    "Identify relationship type (synonym, antonym, function, etc.)",
+    "Check logical meaning connection first before letter/number pattern",
+    "Use elimination if two options partially match",
+    "For alphabet analogy → check position shift, reverse order, vowel–consonant, skip letters",
+    "For number analogy → check square, cube, prime, difference, ratio, digit sum",
+    "For word analogy → check category, tool–user, place, young–adult, cause–effect"
+  ],
+
+  "examples": [
+    {
+      "question": "Lion : Flesh :: Cow : ?",
+      "solution": "Lion eats flesh; cow eats grass → Answer: Grass."
+    },
+    {
+      "question": "Pen : Writer :: Bat : ?",
+      "solution": "Writer uses pen; batsman uses bat → Answer: Batsman."
+    },
+    {
+      "question": "3 : 27 :: 4 : ?",
+      "solution": "27 = 3³ → 4³ = 64 → Answer: 64."
+    }
+  ],
+
+  "practice_questions": [
+    "1. Book : Read :: Song : ?",
+    "2. Doctor : Hospital :: Teacher : ?",
+    "3. 5 : 25 :: 7 : ?",
+    "4. Day : Night :: Hot : ?",
+    "5. Clock : Time :: Thermometer : ?",
+    "6. 8 : 64 :: 9 : ?",
+    "7. Bird : Fly :: Fish : ?",
+    "8. Square : 4 :: Pentagon : ?",
+    "9. 11 : 121 :: 12 : ?",
+    "10. Pain : Medicine :: Hunger : ?"
+  ]
+}

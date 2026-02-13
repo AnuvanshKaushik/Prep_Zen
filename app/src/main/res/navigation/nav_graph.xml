@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/homeFragment">
+
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.prepzen.app.ui.home.HomeFragment"
+        android:label="Home" />
+
+    <fragment
+        android:id="@+id/topicListFragment"
+        android:name="com.prepzen.app.ui.common.TopicListFragment"
+        android:label="Topics" />
+
+    <fragment
+        android:id="@+id/quizFragment"
+        android:name="com.prepzen.app.ui.quiz.QuizFragment"
+        android:label="Quiz" />
+
+    <fragment
+        android:id="@+id/progressFragment"
+        android:name="com.prepzen.app.ui.progress.ProgressFragment"
+        android:label="Progress" />
+
+    <fragment
+        android:id="@+id/aboutFragment"
+        android:name="com.prepzen.app.ui.about.AboutFragment"
+        android:label="About" />
+
+    <fragment
+        android:id="@+id/topicDetailFragment"
+        android:name="com.prepzen.app.ui.common.TopicDetailFragment"
+        android:label="Topic Detail" />
+
+    <fragment
+        android:id="@+id/quizSessionFragment"
+        android:name="com.prepzen.app.ui.quiz.QuizSessionFragment"
+        android:label="Quiz Session" />
+</navigation>

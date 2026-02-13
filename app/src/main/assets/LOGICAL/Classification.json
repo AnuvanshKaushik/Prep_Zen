@@ -1,0 +1,67 @@
+{
+  "section": "Reasoning",
+  "topic": "Classification",
+
+  "theory": "Classification means identifying the odd element from a group of items based on a common property shared by the remaining elements. In SSC, UPSC, and other competitive exams, classification questions may be based on words, letters, numbers, or general knowledge. The task is to detect similarity among most elements and select the one that does not follow the same rule.",
+
+  "all_approaches": [
+    {
+      "approach": "Meaning/Category Based Classification",
+      "explanation": "Check whether three items belong to the same category such as animals, fruits, professions, emotions, etc., and one does not.",
+      "example": "Dog, Cat, Cow, Tiger → Dog, Cat, Tiger are carnivorous/wild animals in many exam contexts, while Cow is herbivorous → Odd: Cow."
+    },
+    {
+      "approach": "Number Property Based Classification",
+      "explanation": "Observe mathematical properties like prime numbers, perfect squares, cubes, multiples, digit sum, parity (odd/even), etc.",
+      "example": "4, 9, 16, 20 → 4, 9, 16 are perfect squares; 20 is not → Odd: 20."
+    },
+    {
+      "approach": "Alphabet/Letter Pattern Classification",
+      "explanation": "Look for alphabetical order, equal gaps, reverse order, vowel–consonant pattern, or positional values.",
+      "example": "ACE, BDF, CEG, ADG → First three follow +2 pattern; ADG does not → Odd: ADG."
+    },
+    {
+      "approach": "Word Formation or Length Pattern",
+      "explanation": "Compare number of letters, vowels, syllables, or spelling structure.",
+      "example": "Book, Pen, Copy, Pencil → Book, Copy, Pencil are nouns for stationery items; Pen differs in exam-specific grouping or may differ by letter count depending on rule."
+    },
+    {
+      "approach": "General Knowledge Based Classification",
+      "explanation": "Use GK such as capitals, countries, sports, scientists, rivers, etc.",
+      "example": "Delhi, Mumbai, Kolkata, India → First three are cities; India is a country → Odd: India."
+    },
+    {
+      "approach": "Relationship/Function Based Classification",
+      "explanation": "Check whether items perform the same function or share the same relationship.",
+      "example": "Knife, Sword, Gun, Axe → Knife, Sword, Axe are sharp weapons; Gun is a firearm → Odd: Gun."
+    }
+  ],
+
+  "examples": [
+    {
+      "question": "Find the odd word: Apple, Mango, Potato, Banana.",
+      "solution": "Apple, Mango, Banana are fruits; Potato is a vegetable → Odd: Potato."
+    },
+    {
+      "question": "Find the odd number: 3, 5, 7, 9.",
+      "solution": "3, 5, 7 are prime numbers; 9 is composite → Odd: 9."
+    },
+    {
+      "question": "Find the odd letters: AB, CD, EF, GH, GI.",
+      "solution": "First four are consecutive letter pairs; GI is not → Odd: GI."
+    }
+  ],
+
+  "practice_questions": [
+    "1. Cow, Goat, Tiger, Dog → Find the odd word.",
+    "2. 11, 13, 17, 21 → Find the odd number.",
+    "3. ABC, DEF, GHI, JKL, JKM → Find the odd group.",
+    "4. Delhi, Paris, London, France → Find the odd word.",
+    "5. 8, 27, 64, 100 → Find the odd number.",
+    "6. Pen, Pencil, Eraser, Chair → Find the odd word.",
+    "7. 2, 4, 8, 15, 16 → Find the odd number.",
+    "8. Sun, Moon, Star, River → Find the odd word.",
+    "9. A, E, I, O, B → Find the odd letter.",
+    "10. Square, Rectangle, Triangle, Circle → Find the odd figure."
+  ]
+}

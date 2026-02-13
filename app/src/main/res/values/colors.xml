@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="blue_100">#DDEAFE</color>
+    <color name="blue_600">#1E5AA8</color>
+    <color name="gray_50">#F5F7FA</color>
+    <color name="gray_300">#D8DFE8</color>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#0F172A</color>
+
+    <color name="bg">#F6F9FF</color>
+    <color name="ink">#121A2D</color>
+    <color name="ink_soft">#4F5D78</color>
+    <color name="accent">#2B6DE8</color>
+    <color name="card_blue">@color/blue_100</color>
+    <color name="card_gray">@color/gray_50</color>
+    <color name="surface_card">#FDFEFF</color>
+    <color name="card_stroke">#DDE5F5</color>
+    <color name="progress_track">#D9E5FF</color>
+    <color name="hero_subtitle">#E6EDFF</color>
+    <color name="gradient_top">#EAF1FF</color>
+    <color name="gradient_bottom">#F8FBFF</color>
+    <color name="hero_gradient_start">#1D3F87</color>
+    <color name="hero_gradient_end">#2D75F0</color>
+    <color name="category_gradient_start">#F8FBFF</color>
+    <color name="category_gradient_end">#EEF4FF</color>
+</resources>

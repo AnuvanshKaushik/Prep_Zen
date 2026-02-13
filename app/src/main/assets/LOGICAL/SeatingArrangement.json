@@ -1,0 +1,72 @@
+{
+  "section": "Reasoning",
+  "topic": "Seating Arrangement",
+
+  "theory": "Seating Arrangement questions test the ability to arrange persons or objects according to given conditions. Arrangements may be linear (single row, double row) or circular (facing center or outside). Candidates must interpret positional clues like left, right, opposite, immediate neighbor, and distance between persons. This is one of the most important and high-scoring reasoning topics in SSC, UPSC, and banking exams.",
+
+  "all_approaches": [
+    {
+      "approach": "Diagram Representation Method",
+      "explanation": "Always draw a visual diagram (line or circle) and place fixed positions first to avoid confusion.",
+      "example": "If A is at extreme left, mark A first and arrange others relative to A."
+    },
+    {
+      "approach": "Extreme Position Filling",
+      "explanation": "Fill definite positions such as left end, right end, or exact opposite seats before relative clues.",
+      "example": "If B sits at the right end in a row of 5, fix B first."
+    },
+    {
+      "approach": "Neighbor Clue Linking",
+      "explanation": "Combine clues like 'A sits next to B' and 'B sits left of C' to form a chain arrangement.",
+      "example": "A–B–C becomes a fixed sequence."
+    },
+    {
+      "approach": "Opposite Seat Logic (Circular)",
+      "explanation": "In a circle, opposite person is exactly halfway across total seats.",
+      "example": "In 8-person circle, opposite seat gap = 4."
+    },
+    {
+      "approach": "Facing Direction Adjustment",
+      "explanation": "If people face center, left/right directions reverse compared to facing outside.",
+      "example": "Facing center → person's left appears clockwise in diagram."
+    },
+    {
+      "approach": "Possibility Elimination",
+      "explanation": "If multiple arrangements exist, test each quickly and remove invalid ones using remaining clues.",
+      "example": "If one clue fails in a trial diagram, discard that case."
+    },
+    {
+      "approach": "Distance Counting Method",
+      "explanation": "Use number of persons between two individuals to determine spacing precisely.",
+      "example": "Two persons between A and D → leave exactly two empty seats."
+    }
+  ],
+
+  "examples": [
+    {
+      "question": "Five persons A, B, C, D, E sit in a row. A is at left end. B is right of C. D is between A and C. Find order.",
+      "solution": "Place A at left → D must be next → then C → then B → E at right. Final order: A D C B E."
+    },
+    {
+      "question": "Eight persons sit in a circle facing center. A is opposite B. C is immediate right of A. Who is left of B?",
+      "solution": "Opposite gap = 4. Place A and B opposite. Put C to A's right (clockwise). Counting around shows the left of B accordingly."
+    },
+    {
+      "question": "In a row of six, P is third from left and Q is second from right. How many sit between P and Q?",
+      "solution": "Positions: P = 3rd, Q = 5th → persons between = 1."
+    }
+  ],
+
+  "practice_questions": [
+    "1. Six people sit in a row. A at left end, B right of C, D between A and C. Find complete order.",
+    "2. Eight persons in circle facing center. A opposite B, C right of A. Who is opposite C?",
+    "3. Five persons sit in a row. P left of Q, R right of Q, S at extreme right. Find middle person.",
+    "4. Seven persons in circle. Two persons between A and B. Opposite of A is C. Find relation positions.",
+    "5. In double row facing each other, A opposite B and C left of A. Who faces C?",
+    "6. Nine persons circular. D immediate neighbor of E and opposite F. Find seat of D.",
+    "7. Linear row of 8. Positions of X and Y given from both ends. Find persons between.",
+    "8. Six persons around table facing outside. Left/right directions change. Determine neighbor of A.",
+    "9. Ten persons circular. Exactly three between M and N. Opposite of N is P. Find M position.",
+    "10. Puzzle-type mixed seating with professions or colors. Determine final arrangement."
+  ]
+}
