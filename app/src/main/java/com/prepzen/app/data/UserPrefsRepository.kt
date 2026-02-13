@@ -68,6 +68,8 @@ class UserPrefsRepository(context: Context) {
         return list.reversed()
     }
 
+    fun getAttemptedTopicIds(): Set<String> = getQuizScores().map { it.topicId }.toSet()
+
     companion object {
         private const val KEY_BOOKMARKS = "bookmarks"
         private const val KEY_VIEWED_TOPICS = "viewed_topics"

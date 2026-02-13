@@ -35,6 +35,8 @@ class ContentRepository(private val context: Context) {
 
     fun getAllTopics(): List<Topic> = content.topics
 
+    fun getAllTopicIds(): Set<String> = content.topicById.keys
+
     fun getTopicById(id: String): Topic? = content.topicById[id]
 
     fun searchTopics(category: TopicCategory, query: String): List<Topic> {

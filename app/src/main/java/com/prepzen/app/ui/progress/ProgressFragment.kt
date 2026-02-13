@@ -33,6 +33,8 @@ class ProgressFragment : Fragment(R.layout.fragment_progress) {
             binding.topicsCovered.text = getString(R.string.progress_topics, state.viewedTopics, state.totalTopics)
             binding.bookmarkedCount.text = getString(R.string.progress_bookmarks, state.bookmarkedTopics)
             binding.avgScore.text = getString(R.string.progress_average, state.averageQuizPercent)
+            binding.attemptCount.text = getString(R.string.progress_attempts, state.quizAttempts)
+            binding.completionProgress.progress = state.completionPercent
             binding.avgProgress.progress = state.averageQuizPercent
             scoreAdapter.submitList(state.recentScores)
             binding.emptyState.visibility = if (state.recentScores.isEmpty()) View.VISIBLE else View.GONE

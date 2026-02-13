@@ -26,7 +26,10 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     }
 
     private val viewModel: HomeViewModel by viewModels {
-        HomeViewModel.Factory(ServiceLocator.contentRepository(requireContext()))
+        HomeViewModel.Factory(
+            contentRepository = ServiceLocator.contentRepository(requireContext()),
+            userPrefsRepository = ServiceLocator.userPrefsRepository(requireContext())
+        )
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -40,9 +43,18 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding.ctaProgress.setOnClickListener { findNavController().navigate(R.id.progressFragment) }
         binding.ctaAbout.setOnClickListener { findNavController().navigate(R.id.aboutFragment) }
 
-        viewModel.categories.observe(viewLifecycleOwner) { categories ->
-            categoryAdapter.submitList(categories)
-            binding.emptyState.visibility = if (categories.isEmpty()) View.VISIBLE else View.GONE
+        viewModel.state.observe(viewLifecycleOwner) { state ->
+            categoryAdapter.submitList(state.categories)
+            binding.emptyState.visibility = if (state.categories.isEmpty()) View.VISIBLE else View.GONE
+            binding.statsTopics.text = getString(
+                R.string.home_topics_stat,
+                state.completedTopics,
+                state.totalTopics
+            )
+            binding.statsBookmarks.text = getString(R.string.home_bookmarks_stat, state.bookmarks)
+            binding.statsAttempts.text = getString(R.string.home_attempts_stat, state.quizAttempts)
+            binding.homeCompletion.progress = state.completionPercent
+            binding.homeCompletionText.text = getString(R.string.home_completion_stat, state.completionPercent)
         }
     }
 

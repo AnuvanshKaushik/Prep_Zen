@@ -35,7 +35,7 @@ class CategoryAdapter(
 
         fun bind(item: QuizCategory, position: Int) {
             binding.categoryTitle.text = item.title
-            binding.categoryMeta.text = "${item.topicCount} topics  •  ${item.questionCount} questions"
+            binding.categoryMeta.text = "${item.topicCount} topics | ${item.questionCount} questions"
             binding.root.alpha = 0f
             binding.root.translationY = 18f
             binding.root.animate()

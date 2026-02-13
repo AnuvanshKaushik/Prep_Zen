@@ -12,6 +12,8 @@ data class ProgressUiState(
     val totalTopics: Int,
     val viewedTopics: Int,
     val bookmarkedTopics: Int,
+    val quizAttempts: Int,
+    val completionPercent: Int,
     val averageQuizPercent: Int,
     val recentScores: List<QuizScore>
 )
@@ -25,10 +27,14 @@ class ProgressViewModel(
     val state: LiveData<ProgressUiState> = _state
 
     fun refresh() {
-        val totalTopics = contentRepository.getAllTopics().size
-        val viewed = userPrefsRepository.getViewedTopics().size
-        val bookmarked = userPrefsRepository.getBookmarks().size
+        val topicIds = contentRepository.getAllTopicIds()
+        val totalTopics = topicIds.size
+        val viewed = userPrefsRepository.getViewedTopics().intersect(topicIds)
+        val attempted = userPrefsRepository.getAttemptedTopicIds().intersect(topicIds)
+        val completed = viewed.union(attempted).size
+        val bookmarked = userPrefsRepository.getBookmarks().intersect(topicIds).size
         val scores = userPrefsRepository.getQuizScores()
+        val completionPercent = if (totalTopics == 0) 0 else ((completed * 100f) / totalTopics).toInt()
         val avg = if (scores.isEmpty()) 0 else {
             scores.map { score ->
                 if (score.total == 0) 0 else (score.score * 100) / score.total
@@ -36,8 +42,10 @@ class ProgressViewModel(
         }
         _state.value = ProgressUiState(
             totalTopics = totalTopics,
-            viewedTopics = viewed,
+            viewedTopics = completed,
             bookmarkedTopics = bookmarked,
+            quizAttempts = scores.size,
+            completionPercent = completionPercent,
             averageQuizPercent = avg,
             recentScores = scores.take(8)
         )

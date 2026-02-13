@@ -34,6 +34,7 @@ class QuizSessionViewModel(
     val feedbackEvent = SingleLiveEvent<Pair<Boolean, String>>()
 
     fun start(topicId: String, difficulty: String) {
+        userPrefsRepository.markTopicViewed(topicId)
         questions = contentRepository.getQuestions(topicId, difficulty).shuffled().take(10)
         currentIndex = 0
         score = 0
