@@ -59,30 +59,10 @@ class ContentRepository(private val context: Context) {
     }
 
     fun getQuestions(topicId: String, difficulty: String): List<QuizQuestion> {
-        val topic = content.topicById[topicId]
         val forTopic = content.questions.filter { it.topicId == topicId }
-        val inCategory = topic?.let { selected ->
-            content.questions.filter { q ->
-                content.topicById[q.topicId]?.categoryId == selected.categoryId
-            }
-        }.orEmpty()
-        val all = content.questions
-
-        fun byDifficulty(source: List<QuizQuestion>): List<QuizQuestion> {
-            if (difficulty.isBlank()) return source
-            val filtered = source.filter { it.difficulty.equals(difficulty, ignoreCase = true) }
-            return if (filtered.isNotEmpty()) filtered else source
-        }
-
-        val candidates = listOf(
-            byDifficulty(forTopic),
-            forTopic,
-            byDifficulty(inCategory),
-            inCategory,
-            byDifficulty(all),
-            all
-        )
-        return candidates.firstOrNull { it.isNotEmpty() }.orEmpty()
+        if (difficulty.isBlank()) return forTopic
+        val filtered = forTopic.filter { it.difficulty.equals(difficulty, ignoreCase = true) }
+        return if (filtered.isNotEmpty()) filtered else forTopic
     }
 
     fun getAvailableQuizTopics(categoryId: String? = null): List<Topic> {
@@ -101,6 +81,7 @@ class ContentRepository(private val context: Context) {
         val topicList = mutableListOf<Topic>()
         val topicByFileKey = mutableMapOf<String, Topic>()
         val topicByTitleKey = mutableMapOf<String, Topic>()
+        val topicById = mutableMapOf<String, Topic>()
 
         directories.forEach { categoryDir ->
             val files = context.assets.list(categoryDir).orEmpty()
@@ -114,11 +95,15 @@ class ContentRepository(private val context: Context) {
                 topicList += topic
                 topicByFileKey[fileKey(categoryDir, file)] = topic
                 topicByTitleKey[titleKey(topic.title)] = topic
+                topicById[topic.id] = topic
             }
         }
 
         val questions = mutableListOf<QuizQuestion>()
-        loadLegacyQuizQuestions(topicByTitleKey = topicByTitleKey).forEach { questions += it }
+        loadLegacyQuizQuestions(
+            topicByTitleKey = topicByTitleKey,
+            topicById = topicById
+        ).forEach { questions += it }
         directories.forEach { categoryDir ->
             val files = context.assets.list(categoryDir).orEmpty()
                 .filter { it.lowercase(Locale.US).endsWith(".json") }
@@ -131,7 +116,8 @@ class ContentRepository(private val context: Context) {
                 } else if (file.equals("quizzes.json", ignoreCase = true)) {
                     loadSharedQuizQuestions(
                         assetPath = assetPath,
-                        topicByTitleKey = topicByTitleKey
+                        topicByTitleKey = topicByTitleKey,
+                        topicById = topicById
                     ).forEach { questions += it }
                 }
             }
@@ -217,7 +203,10 @@ class ContentRepository(private val context: Context) {
         }
     }
 
-    private fun loadLegacyQuizQuestions(topicByTitleKey: MutableMap<String, Topic>): List<QuizQuestion> {
+    private fun loadLegacyQuizQuestions(
+        topicByTitleKey: MutableMap<String, Topic>,
+        topicById: Map<String, Topic>
+    ): List<QuizQuestion> {
         val legacy = readAssetSafely("quizzes.json") ?: return emptyList()
         if (legacy.isBlank()) return emptyList()
         val result = mutableListOf<QuizQuestion>()
@@ -227,7 +216,8 @@ class ContentRepository(private val context: Context) {
                 val obj = array.optJSONObject(i) ?: continue
                 val topic = resolveTopicForQuiz(
                     quizObj = obj,
-                    topicByTitleKey = topicByTitleKey
+                    topicByTitleKey = topicByTitleKey,
+                    topicById = topicById
                 ) ?: continue
                 val options = obj.optJSONArray("options").toStringList().take(4)
                 if (options.isEmpty()) continue
@@ -252,7 +242,8 @@ class ContentRepository(private val context: Context) {
 
     private fun loadSharedQuizQuestions(
         assetPath: String,
-        topicByTitleKey: MutableMap<String, Topic>
+        topicByTitleKey: MutableMap<String, Topic>,
+        topicById: Map<String, Topic>
     ): List<QuizQuestion> {
         val raw = readAssetSafely(assetPath) ?: return emptyList()
         if (raw.isBlank()) return emptyList()
@@ -263,7 +254,8 @@ class ContentRepository(private val context: Context) {
                 val obj = array.optJSONObject(i) ?: continue
                 val topic = resolveTopicForQuiz(
                     quizObj = obj,
-                    topicByTitleKey = topicByTitleKey
+                    topicByTitleKey = topicByTitleKey,
+                    topicById = topicById
                 ) ?: continue
                 val options = obj.optJSONArray("options").toStringList().take(4)
                 val answerIndex = obj.optInt("answerIndex", -1)
@@ -390,48 +382,23 @@ class ContentRepository(private val context: Context) {
 
     private fun resolveTopicForQuiz(
         quizObj: JSONObject,
-        topicByTitleKey: MutableMap<String, Topic>
+        topicByTitleKey: MutableMap<String, Topic>,
+        topicById: Map<String, Topic>
     ): Topic? {
+        val rawTopicId = quizObj.optString("topicId").trim()
+        LEGACY_TOPIC_ID_ALIAS[rawTopicId]?.let { mappedId ->
+            topicById[mappedId]?.let { return it }
+        }
+
         val quizTopicTitle = cleanText(quizObj.optString("topicTitle"))
         val key = titleKey(quizTopicTitle)
         topicByTitleKey[key]?.let { return it }
 
-        val resolved = findBestTopicMatch(quizTopicTitle, topicByTitleKey.values.toList())
-        if (resolved != null) {
-            topicByTitleKey[key] = resolved
-            return resolved
+        LEGACY_TOPIC_TITLE_ALIAS[key]?.let { mappedId ->
+            topicById[mappedId]?.let { return it }
         }
+
         return null
-    }
-
-    private fun findBestTopicMatch(quizTitle: String, topics: List<Topic>): Topic? {
-        if (quizTitle.isBlank()) return null
-        val normalizedQuiz = normalizeWords(quizTitle)
-        if (normalizedQuiz.isEmpty()) return null
-        return topics
-            .asSequence()
-            .map { topic ->
-                val topicWords = normalizeWords(topic.title)
-                val overlap = normalizedQuiz.intersect(topicWords).size
-                val score = overlap * 10 - kotlin.math.abs(topicWords.size - normalizedQuiz.size)
-                topic to score
-            }
-            .filter { it.second >= 8 }
-            .maxByOrNull { it.second }
-            ?.first
-    }
-
-    private fun normalizeWords(input: String): Set<String> {
-        return cleanText(input)
-            .lowercase(Locale.US)
-            .replace("&", " ")
-            .replace(",", " ")
-            .replace("-", " ")
-            .replace("/", " ")
-            .split(Regex("\\s+"))
-            .map { it.trim() }
-            .filter { it.length >= 3 }
-            .toSet()
     }
 
     private fun String.toPrettyCategoryTitle(): String {
@@ -522,5 +489,17 @@ class ContentRepository(private val context: Context) {
 
     companion object {
         private const val TAG = "ContentRepository"
+        private val LEGACY_TOPIC_ID_ALIAS = mapOf(
+            "eng_vocab_syn_ant" to "verbal_english",
+            "eng_grammar_sva" to "verbal_english",
+            "apt_numsys" to "quantitative_number_system",
+            "apt_arith_percent" to "quantitative_percentage"
+        )
+        private val LEGACY_TOPIC_TITLE_ALIAS = mapOf(
+            "synonymsantonyms" to "verbal_english",
+            "subjectverbagreement" to "verbal_english",
+            "numbersystem" to "quantitative_number_system",
+            "percentagesprofitlosssici" to "quantitative_percentage"
+        )
     }
 }
