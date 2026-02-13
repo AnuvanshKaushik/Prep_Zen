@@ -27,6 +27,8 @@ class QuizSessionViewModel(
     private var currentIndex = 0
     private var score = 0
     private var scoreSaved = false
+    private var selectedTopicId: String = ""
+    private var selectedTopicTitle: String = ""
 
     private val _state = MutableLiveData(QuizUiState(0, 0, null, 0, completed = false))
     val state: LiveData<QuizUiState> = _state
@@ -35,6 +37,8 @@ class QuizSessionViewModel(
 
     fun start(topicId: String, difficulty: String) {
         userPrefsRepository.markTopicViewed(topicId)
+        selectedTopicId = topicId
+        selectedTopicTitle = contentRepository.getTopicById(topicId)?.title.orEmpty()
         questions = contentRepository.getQuestions(topicId, difficulty).shuffled().take(10)
         currentIndex = 0
         score = 0
@@ -63,10 +67,12 @@ class QuizSessionViewModel(
     private fun saveScore() {
         if (scoreSaved) return
         val first = questions.firstOrNull() ?: return
+        val scoreTopicId = selectedTopicId.ifBlank { first.topicId }
+        val scoreTopicTitle = selectedTopicTitle.ifBlank { first.topicTitle }
         userPrefsRepository.saveQuizScore(
             QuizScore(
-                topicId = first.topicId,
-                topicTitle = first.topicTitle,
+                topicId = scoreTopicId,
+                topicTitle = scoreTopicTitle,
                 score = score,
                 total = questions.size,
                 timestamp = System.currentTimeMillis()

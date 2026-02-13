@@ -59,10 +59,30 @@ class ContentRepository(private val context: Context) {
     }
 
     fun getQuestions(topicId: String, difficulty: String): List<QuizQuestion> {
+        val topic = content.topicById[topicId]
         val forTopic = content.questions.filter { it.topicId == topicId }
-        if (difficulty.isBlank()) return forTopic
-        val filtered = forTopic.filter { it.difficulty.equals(difficulty, ignoreCase = true) }
-        return if (filtered.isNotEmpty()) filtered else forTopic
+        val inCategory = topic?.let { selected ->
+            content.questions.filter { q ->
+                content.topicById[q.topicId]?.categoryId == selected.categoryId
+            }
+        }.orEmpty()
+        val all = content.questions
+
+        fun byDifficulty(source: List<QuizQuestion>): List<QuizQuestion> {
+            if (difficulty.isBlank()) return source
+            val filtered = source.filter { it.difficulty.equals(difficulty, ignoreCase = true) }
+            return if (filtered.isNotEmpty()) filtered else source
+        }
+
+        val candidates = listOf(
+            byDifficulty(forTopic),
+            forTopic,
+            byDifficulty(inCategory),
+            inCategory,
+            byDifficulty(all),
+            all
+        )
+        return candidates.firstOrNull { it.isNotEmpty() }.orEmpty()
     }
 
     fun getAvailableQuizTopics(categoryId: String? = null): List<Topic> {

@@ -21,7 +21,7 @@ class QuizSelectionViewModel(
     private var selectedCategoryId: String? = null
 
     init {
-        val categories = contentRepository.getCategories().filter { it.questionCount > 0 }
+        val categories = contentRepository.getCategories()
         _categories.value = categories
         if (categories.isNotEmpty()) {
             selectCategory(categories.first().id)
@@ -32,7 +32,7 @@ class QuizSelectionViewModel(
 
     fun selectCategory(categoryId: String) {
         selectedCategoryId = categoryId
-        _topics.value = contentRepository.getAvailableQuizTopics(categoryId)
+        _topics.value = contentRepository.getTopicsByCategoryId(categoryId).sortedBy { it.title }
     }
 
     fun getSelectedCategoryId(): String? = selectedCategoryId

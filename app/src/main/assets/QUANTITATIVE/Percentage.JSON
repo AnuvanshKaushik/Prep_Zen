@@ -1,0 +1,27 @@
+﻿{
+    "section":  "Quantitative Aptitude",
+    "topic":  "Percentage",
+    "theory":  "Percentage is an important topic in Quantitative Aptitude. Start with basic concepts, then learn standard methods and shortcuts. Practice easy questions first and move to timed mixed questions.",
+    "all_approaches":  [
+                           "Understand the core definition and common question patterns.",
+                           "Break each question into known facts and unknown target.",
+                           "Use elimination when options are close.",
+                           "Track mistakes and revise formulas/patterns daily."
+                       ],
+    "examples":  [
+                     {
+                         "question":  "Sample Percentage question 1",
+                         "solution":  "Identify the main rule and solve step by step."
+                     },
+                     {
+                         "question":  "Sample Percentage question 2",
+                         "solution":  "Apply the shortcut method and verify with options."
+                     }
+                 ],
+    "practice_questions":  [
+                               "1. Solve 5 easy questions from Percentage.",
+                               "2. Solve 5 medium questions with timer.",
+                               "3. Create short notes for Percentage formulas/rules.",
+                               "4. Attempt one mixed set and review mistakes."
+                           ]
+}
